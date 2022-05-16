@@ -9,10 +9,8 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
@@ -98,6 +96,26 @@ public class Test01 {
             }
         });
 
+        HashMap<TopicPartition, Long> mapForTime = new HashMap<>();
+        Set<TopicPartition> topicPartitions = consumer.assignment();
+        // 只有当poll的时候才会真正和Kafka建立连接
+        while (topicPartitions.size() == 0) {
+            consumer.poll(Duration.ofMillis(0));
+            topicPartitions = consumer.assignment();
+        }
+        // 拿到分区信息后，填充时间戳
+        for (TopicPartition topicPartition : topicPartitions) {
+            mapForTime.put(topicPartition,1610629127300L);
+        }
+        // 拿到每个分区时间戳的offset
+        Map<TopicPartition, OffsetAndTimestamp> offsetFotTime = consumer.offsetsForTimes(mapForTime);
+        for (TopicPartition topicPartition : topicPartitions) {
+            OffsetAndTimestamp offsetAndTimestamp = offsetFotTime.get(topicPartition);
+            long offset = offsetAndTimestamp.offset();
+            // 根据offset进行重定位
+            consumer.seek(topicPartition,offset);
+        }
+
         while (true) {
             ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(0));
             if (!records.isEmpty()) {
@@ -133,9 +151,6 @@ public class Test01 {
 
             }
         }
-
-
-
     }
 
 }
