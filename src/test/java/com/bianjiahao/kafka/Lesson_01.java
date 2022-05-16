@@ -18,7 +18,7 @@ import java.util.concurrent.Future;
  * @Date 2022/5/6 20:32
  */
 @SpringBootTest
-public class Test01 {
+public class Lesson_01 {
 
     @Test
     public void producer() throws Exception {
